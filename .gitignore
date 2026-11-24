@@ -83,6 +83,9 @@ tmpinst-dir.stamp
 # Crashlytics generated file
 crashlytics-build.properties
 
+# TestRunner generated files
+InitTestScene*.unity*
+
 # Blender generated backup files
 /[Aa]ssets/**/*.blend1
 /[Aa]ssets/**/*.blend1.meta
@@ -136,3 +139,4 @@ crashlytics-build.properties
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
