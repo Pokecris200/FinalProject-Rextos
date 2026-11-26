@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class EnemyVision : MonoBehaviour
@@ -14,6 +13,14 @@ public class EnemyVision : MonoBehaviour
     [Range(0f, 360f)]
     [SerializeField] private float viewAngle = 90f;
 
+    [Header("Vision vertical de guardias")]
+    [Range(0f, 180f)]
+    [SerializeField] private float verticalViewAngle = 120f;
+
+    [Min(0f)]
+    [SerializeField] private float maxHeightDifference = 5f;
+
+    [Header("Obstaculos")]
     [SerializeField] private LayerMask obstacleMask;
 
     public bool CanSeePlayer { get; private set; }
@@ -24,45 +31,89 @@ public class EnemyVision : MonoBehaviour
     public Transform Player => player;
     public bool Use3DVision => use3DVision;
 
+    public float VerticalViewAngle => verticalViewAngle;
+    public float MaxHeightDifference => maxHeightDifference;
+
     private void Update()
     {
         CanSeePlayer = DetectPlayer();
     }
 
-    
     private bool DetectPlayer()
     {
         if (player == null || eyePoint == null)
             return false;
 
+        if (!player.gameObject.activeInHierarchy)
+            return false;
+
         Vector3 directionToPlayer =
             player.position - eyePoint.position;
 
-        float distanceToPlayer = directionToPlayer.magnitude;
+        float distanceToPlayer =
+            directionToPlayer.magnitude;
 
-        // Comprobar distancia de deteccion
-        if (distanceToPlayer > viewDistance)
-            return false;
-
-        Vector3 forward = eyePoint.forward;
-        Vector3 detectionDirection = directionToPlayer;
-
-        // Vision horizontal para guardias moviles
-        if (!use3DVision)
+        // Vision tridimensional para camaras de seguridad
+        if (use3DVision)
         {
-            forward = Vector3.ProjectOnPlane(
-                forward, Vector3.up);
+            if (distanceToPlayer > viewDistance)
+                return false;
 
-            detectionDirection = Vector3.ProjectOnPlane(
-                detectionDirection, Vector3.up);
+            if (Vector3.Angle(
+                eyePoint.forward,
+                directionToPlayer) > viewAngle / 2f)
+            {
+                return false;
+            }
         }
 
-        // Comprobar el angulo de vision
-        if (Vector3.Angle(forward, detectionDirection)
-            > viewAngle / 2f)
-            return false;
+        // Vision horizontal y vertical para guardias
+        else
+        {
+            Vector3 horizontalDirection =
+                Vector3.ProjectOnPlane(
+                    directionToPlayer, Vector3.up);
 
-        // Comprobar si existen obstaculos
+            float horizontalDistance =
+                horizontalDirection.magnitude;
+
+            // La altura no reduce el alcance horizontal
+            if (horizontalDistance > viewDistance)
+                return false;
+
+            // Limitar la diferencia de altura
+            if (Mathf.Abs(directionToPlayer.y)
+                > maxHeightDifference)
+            {
+                return false;
+            }
+
+            Vector3 horizontalForward =
+                Vector3.ProjectOnPlane(
+                    eyePoint.forward, Vector3.up);
+
+            // Comprobar el angulo horizontal
+            if (horizontalDistance > 0.001f &&
+                Vector3.Angle(
+                    horizontalForward,
+                    horizontalDirection) > viewAngle / 2f)
+            {
+                return false;
+            }
+
+            // Calcular el angulo vertical hacia el jugador
+            float verticalAngle = Mathf.Atan2(
+                directionToPlayer.y,
+                horizontalDistance) * Mathf.Rad2Deg;
+
+            if (Mathf.Abs(verticalAngle)
+                > verticalViewAngle / 2f)
+            {
+                return false;
+            }
+        }
+
+        // Comprobar obstaculos mediante un Raycast 3D
         if (Physics.Raycast(
             eyePoint.position,
             directionToPlayer.normalized,
@@ -81,8 +132,6 @@ public class EnemyVision : MonoBehaviour
         if (eyePoint == null)
             return;
 
-        // Verde: patrullaje
-        // Rojo: jugador detectado
         Gizmos.color = CanSeePlayer
             ? Color.red
             : Color.green;
@@ -96,7 +145,7 @@ public class EnemyVision : MonoBehaviour
         int segments = 40;
         Vector3 previousPoint = origin;
 
-        // Dibujar los limites del campo de vision
+        // Dibujar los limites horizontales de vision
         for (int i = 0; i <= segments; i++)
         {
             float angle = Mathf.Lerp(
@@ -118,6 +167,27 @@ public class EnemyVision : MonoBehaviour
 
         Gizmos.DrawLine(previousPoint, origin);
 
+        // Dibujar los limites verticales de los guardias
+        if (!use3DVision)
+        {
+            float upperHeight = Mathf.Min(
+                maxHeightDifference,
+                viewDistance * Mathf.Tan(
+                    verticalViewAngle / 2f * Mathf.Deg2Rad));
+
+            Vector3 upperPoint =
+                origin + forward * viewDistance
+                + Vector3.up * upperHeight;
+
+            Vector3 lowerPoint =
+                origin + forward * viewDistance
+                - Vector3.up * upperHeight;
+
+            Gizmos.DrawLine(origin, upperPoint);
+            Gizmos.DrawLine(origin, lowerPoint);
+            Gizmos.DrawLine(upperPoint, lowerPoint);
+        }
+
         // Dibujar una linea hacia el jugador detectado
         if (CanSeePlayer && player != null)
         {
@@ -125,4 +195,3 @@ public class EnemyVision : MonoBehaviour
         }
     }
 }
-

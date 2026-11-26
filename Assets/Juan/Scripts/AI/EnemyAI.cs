@@ -23,6 +23,9 @@ public class EnemyAI : MonoBehaviour
     [SerializeField, Min(0.1f)]
     private float chaseStoppingDistance = 0.8f;
 
+    [SerializeField, Min(0.1f)]
+    private float captureDistance = 1f;
+
     [SerializeField, Min(0.05f)]
     private float repathInterval = 0.2f;
 
@@ -147,6 +150,7 @@ private void ChangeState(EnemyState newState)
 
             break;
 
+        
         case EnemyState.Chase:
 
             patrol.StopPatrol();
@@ -160,12 +164,30 @@ private void ChangeState(EnemyState newState)
 
             repathTimer = 0f;
 
-            if (agent.isOnNavMesh)
-            {
-                agent.isStopped = false;
-            }
+        if (agent.isOnNavMesh)
+        {
+            agent.isStopped = false;
+        }
 
-            break;
+        // Capturar al jugador al confirmar la deteccion
+        if (vision.Player != null)
+        {
+            PlayerCapture playerCapture =
+                vision.Player.GetComponentInParent<PlayerCapture>();
+
+            if (playerCapture != null)
+            {
+                playerCapture.Capture();
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "No se encontro PlayerCapture en el jugador.");
+            }
+        }
+
+        break;
+
     }
 
     Debug.Log(
@@ -196,9 +218,19 @@ private void ChangeState(EnemyState newState)
     }
 
 
+    
+    
     private void UpdateChase()
     {
         if (!agent.isOnNavMesh)
+            return;
+
+        if (GameOverManager.Instance != null &&
+            GameOverManager.Instance.IsGameOver)
+            return;
+
+        // Comprobar si el guardia alcanzo al jugador
+        if (CheckCapture())
             return;
 
         // Si pierde al jugador, volver temporalmente a patrullar
@@ -227,15 +259,58 @@ private void ChangeState(EnemyState newState)
             areaMask = agent.areaMask
         };
 
-        // Encontrar una posicion navegable cercana al jugador
+        // Proyectar la posicion del jugador sobre el NavMesh
+        Vector3 groundTarget = lastKnownPosition;
+        groundTarget.y = agent.nextPosition.y;
+
         if (NavMesh.SamplePosition(
-            lastKnownPosition,
+            groundTarget,
             out NavMeshHit hit,
             2f,
             filter))
-        {
-            agent.SetDestination(hit.position);
+       {
+           agent.SetDestination(hit.position);
         }
     }
+
+
+
+    private bool CheckCapture()
+    {
+        if (vision.Player == null)
+            return false;
+
+        PlayerCapture playerCapture =
+            vision.Player.GetComponentInParent<PlayerCapture>();
+
+        if (playerCapture == null || !playerCapture.IsCaptured)
+            return false;
+
+        // Calcular la distancia horizontal al jugador
+        Vector3 direction =
+            vision.Player.position - transform.position;
+
+        direction.y = 0f;
+
+        float distance = direction.magnitude;
+
+        // Comprobar si el guardia ha alcanzado al jugador
+        if (distance > captureDistance)
+            return false;
+
+        if (GameOverManager.Instance == null)
+            return false;
+
+        // Detener al guardia
+        agent.ResetPath();
+        agent.isStopped = true;
+
+        // Finalizar la partida
+        GameOverManager.Instance.TriggerGameOver();
+
+        return true;
+    }
+
+
 
 }

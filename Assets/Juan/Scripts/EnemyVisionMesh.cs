@@ -41,6 +41,7 @@ public class EnemyVisionMesh : MonoBehaviour
     new Color(1f, 1f, 0f, 0.35f);
 
     private EnemyAI enemyAI;
+    private StaticEnemyAI staticEnemyAI;
 
     private Mesh visionMesh;
     private MeshRenderer meshRenderer;
@@ -54,6 +55,7 @@ public class EnemyVisionMesh : MonoBehaviour
         // Obtener los componentes necesarios
         meshRenderer = GetComponent<MeshRenderer>();
         enemyAI = GetComponentInParent<EnemyAI>();
+        staticEnemyAI = GetComponentInParent<StaticEnemyAI>();
 
         if (enemyVision == null)
             enemyVision = GetComponentInParent<EnemyVision>();
@@ -333,32 +335,53 @@ public class EnemyVisionMesh : MonoBehaviour
 
 
     
+    
     private void UpdateColor()
     {
         Color currentColor = patrolColor;
 
+        EnemyState state = EnemyState.Patrol;
+
+        // Obtener el estado del guardia movil
         if (enemyAI != null)
         {
-            switch (enemyAI.CurrentState)
-            {
-                case EnemyState.Patrol:
-                    currentColor = patrolColor;
-                    break;
-
-                case EnemyState.Suspicious:
-                    currentColor = suspiciousColor;
-                    break;
-
-                case EnemyState.Chase:
-                    currentColor = detectedColor;
-                    break;
-            }
+            state = enemyAI.CurrentState;
         }
+
+        // Obtener el estado de la camara de seguridad
+        else if (staticEnemyAI != null)
+        {
+            state = staticEnemyAI.CurrentState;
+        }
+
+        // Deteccion basica para otros tipos de enemigos
         else
         {
-             currentColor = enemyVision.CanSeePlayer
-                ? detectedColor
-                : patrolColor;
+            state = enemyVision.CanSeePlayer
+                ? EnemyState.Chase
+                : EnemyState.Patrol;
+        }
+
+        // Asignar el color correspondiente al estado
+        switch (state)
+        {
+            case EnemyState.Patrol:
+
+                currentColor = patrolColor;
+
+                break;
+
+            case EnemyState.Suspicious:
+
+                currentColor = suspiciousColor;
+
+                break;
+
+            case EnemyState.Chase:
+
+                currentColor = detectedColor;
+
+                break;
         }
 
         meshRenderer.GetPropertyBlock(propertyBlock);
@@ -368,4 +391,5 @@ public class EnemyVisionMesh : MonoBehaviour
 
         meshRenderer.SetPropertyBlock(propertyBlock);
     }
+
 }
