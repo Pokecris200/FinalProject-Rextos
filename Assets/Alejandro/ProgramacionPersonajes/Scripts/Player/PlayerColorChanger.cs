@@ -94,4 +94,27 @@ public class PlayerColorChanger : MonoBehaviour
         IsOnCooldown = true;
         _cooldownTimer = _cooldownDuration;
     }
+
+    /// <summary>
+    /// Points the color change to a new renderer (used when the player's model is swapped).
+    /// If the color is currently active, the tint is applied to the new model as well.
+    /// </summary>
+    public void SetTargetRenderer(Renderer newRenderer)
+    {
+        if (newRenderer == null)
+        {
+            Debug.LogWarning("The new model has no Renderer to tint.", this);
+            return;
+        }
+
+        _targetRenderer = newRenderer;
+
+        // The new model's own color becomes the one restored later.
+        _baseColor = _targetRenderer.material.color;
+
+        if (_isColorActive)
+        {
+            _targetRenderer.material.color = _activeColor;
+        }
+    }
 }
