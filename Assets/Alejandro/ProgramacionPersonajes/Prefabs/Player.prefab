@@ -101,7 +101,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 116
   m_CollisionDetection: 0
 --- !u!114 &4884922970791857990
 MonoBehaviour:
@@ -132,16 +132,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerModelSwitcher
   _modelHolder: {fileID: 4107216088711764606}
-  _currentModel: {fileID: 6136001718047399543}
   _bodyPartModels:
   - _partType: 0
-    _prefab: {fileID: 6136001718047399543}
+    _model: {fileID: 6136001718047399543}
   - _partType: 1
-    _prefab: {fileID: 6633969163925596183}
+    _model: {fileID: 6633969163925596183}
   - _partType: 2
-    _prefab: {fileID: 4566664284983860308, guid: 989e148540ab5a443b6cbee4f83a873d, type: 3}
+    _model: {fileID: 8877717762610702707}
   - _partType: 3
-    _prefab: {fileID: 6853086613851562556, guid: 0042614bb3cd9f84fa48e33902adf904, type: 3}
+    _model: {fileID: 7108133350335366253}
   _colorChanger: {fileID: 1666176070772658653}
 --- !u!114 &424483394502305120
 MonoBehaviour:
@@ -404,6 +403,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 901052998722837109, guid: 0042614bb3cd9f84fa48e33902adf904, type: 3}
   m_PrefabInstance: {fileID: 4449033512917640785}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7108133350335366253 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6853086613851562556, guid: 0042614bb3cd9f84fa48e33902adf904, type: 3}
+  m_PrefabInstance: {fileID: 4449033512917640785}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4777159170312331819
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -570,5 +574,10 @@ PrefabInstance:
 --- !u!4 &3533542440388567269 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8456171979343107522, guid: 989e148540ab5a443b6cbee4f83a873d, type: 3}
+  m_PrefabInstance: {fileID: 4923544607578076455}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8877717762610702707 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4566664284983860308, guid: 989e148540ab5a443b6cbee4f83a873d, type: 3}
   m_PrefabInstance: {fileID: 4923544607578076455}
   m_PrefabAsset: {fileID: 0}
