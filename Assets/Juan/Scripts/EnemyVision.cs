@@ -194,4 +194,39 @@ public class EnemyVision : MonoBehaviour
             Gizmos.DrawLine(origin, player.position);
         }
     }
+
+    [ContextMenu("Diagnosticar vision")]
+    private void DiagnoseVision()
+    {
+        if (player == null || eyePoint == null)
+        {
+            Debug.LogWarning("Faltan referencias", this);
+            return;
+        }
+
+        Vector3 direction = player.position - eyePoint.position;
+
+        float distance = direction.magnitude;
+
+        float angle = Vector3.Angle(
+            eyePoint.forward, direction);
+
+        bool blocked = Physics.Raycast(
+            eyePoint.position,
+            direction.normalized,
+            out RaycastHit hit,
+            distance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore);
+
+        Debug.Log(
+            $"Jugador: {player.name}\n" +
+            $"Activo: {player.gameObject.activeInHierarchy}\n" +
+            $"Vision 3D: {use3DVision}\n" +
+            $"Distancia: {distance:F2} / {viewDistance}\n" +
+            $"Angulo: {angle:F2} / {viewAngle / 2f}\n" +
+            $"Obstaculo: {(blocked ? hit.collider.name : "Ninguno")}\n" +
+            $"Detectado: {DetectPlayer()}",
+            this);
+    }
 }

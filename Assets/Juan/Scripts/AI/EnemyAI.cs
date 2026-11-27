@@ -44,6 +44,15 @@ public class EnemyAI : MonoBehaviour
     [SerializeField]
     private Vector3 lastKnownPosition;
 
+    [Header("Alertas de seguridad")]
+
+    [SerializeField]
+    private bool respondingToAlert;
+
+    private Transform alertTarget;
+
+    public bool IsRespondingToAlert => respondingToAlert;
+
     private NavMeshAgent agent;
     private EnemyPatrol patrol;
     private EnemyVision vision;
@@ -128,7 +137,10 @@ private void ChangeState(EnemyState newState)
     switch (currentState)
     {
         case EnemyState.Patrol:
-
+            
+            respondingToAlert = false;
+            alertTarget = null;
+            
             suspicionTimer = 0f;
 
             agent.updateRotation = true;
@@ -217,6 +229,134 @@ private void ChangeState(EnemyState newState)
                 rotationSpeed * Time.deltaTime);
     }
 
+    // Calcular la longitud del recorrido hacia una alerta
+    // sin modificar el estado actual del enemigo
+    public bool TryGetAlertPathDistance(
+        Transform target,
+        out float pathDistance)
+    {
+        pathDistance = Mathf.Infinity;
+
+        // Comprobar disponibilidad del guardia
+        if (target == null ||
+            !isActiveAndEnabled ||
+            !agent.isOnNavMesh ||
+            currentState == EnemyState.Chase ||
+            respondingToAlert)
+        {
+            return false;
+        }
+
+        // Verificar que sea el jugador correspondiente
+        if (target != vision.Player)
+            return false;
+
+        // Proyectar el objetivo sobre el NavMesh
+        Vector3 groundTarget = target.position;
+        groundTarget.y = agent.nextPosition.y;
+
+        NavMeshQueryFilter filter = new NavMeshQueryFilter
+        {
+            agentTypeID = agent.agentTypeID,
+            areaMask = agent.areaMask
+        };
+
+        if (!NavMesh.SamplePosition(
+            groundTarget,
+            out NavMeshHit hit,
+            2f,
+            filter))
+        {
+            return false;
+        }
+
+        // Calcular una ruta sin modificar el destino actual
+        NavMeshPath alertPath = new NavMeshPath();
+
+        if (!agent.CalculatePath(hit.position, alertPath) ||
+            alertPath.status != NavMeshPathStatus.PathComplete)
+        {
+            return false;
+        }
+
+        // Sumar las distancias entre los puntos del recorrido
+        pathDistance = 0f;
+
+        Vector3[] corners = alertPath.corners;
+
+       for (int i = 1; i < corners.Length; i++)
+       {
+            pathDistance += Vector3.Distance(
+                corners[i - 1],
+                corners[i]);
+       }
+
+       return true;
+    }
+
+    // Recibir una alerta externa de una camara de seguridad
+    public bool ReceiveSecurityAlert(Transform target)
+    {
+        if (target == null ||
+            !isActiveAndEnabled ||
+            !agent.isOnNavMesh)
+        {
+            return false;
+        }
+
+        // Evitar interrumpir una persecucion existente
+        if (currentState == EnemyState.Chase)
+            return false;
+
+        // Comprobar que el objetivo corresponde al jugador
+        if (target != vision.Player)
+            return false;
+
+        // Proyectar la posicion del jugador sobre el NavMesh
+        Vector3 groundTarget = target.position;
+        groundTarget.y = agent.nextPosition.y;
+
+        NavMeshQueryFilter filter = new NavMeshQueryFilter
+        {
+            agentTypeID = agent.agentTypeID,
+            areaMask = agent.areaMask
+        };
+
+        if (!NavMesh.SamplePosition(
+            groundTarget,
+            out NavMeshHit hit,
+            2f,
+            filter))
+        {
+            return false;
+        }
+
+        // Verificar que exista una ruta completa hacia el jugador
+        NavMeshPath path = new NavMeshPath();
+
+        if (!agent.CalculatePath(hit.position, path) ||
+            path.status != NavMeshPathStatus.PathComplete)
+        {
+            return false;
+        }
+
+        // Registrar la alerta
+        respondingToAlert = true;
+        alertTarget = target;
+        lastKnownPosition = target.position;
+
+        // Iniciar la persecucion sin deteccion visual directa
+        ChangeState(EnemyState.Chase);
+
+        agent.SetPath(path);
+
+        Debug.Log(
+            gameObject.name + " - Alerta de seguridad recibida",
+            this);
+
+        return true;
+    }
+
 
     
     
@@ -229,21 +369,40 @@ private void ChangeState(EnemyState newState)
             GameOverManager.Instance.IsGameOver)
             return;
 
-        // Comprobar si el guardia alcanzo al jugador
-        if (CheckCapture())
-            return;
+        Transform target = respondingToAlert
+            ? alertTarget
+            : vision.Player;
 
-        // Si pierde al jugador, volver temporalmente a patrullar
-        if (!vision.CanSeePlayer || vision.Player == null)
+        if (target == null)
         {
             ChangeState(EnemyState.Patrol);
             return;
         }
 
-        // Actualizar la ultima posicion conocida
-        lastKnownPosition = vision.Player.position;
+        // Comprobar si el jugador ya esta inmovilizado
+        PlayerCapture playerCapture =
+            target.GetComponentInParent<PlayerCapture>();
 
-        // Mantener la mirada hacia el jugador
+        bool playerCaptured =
+            playerCapture != null && playerCapture.IsCaptured;
+
+        // Comprobar si el guardia alcanzo al jugador
+        if (CheckCapture())
+            return;
+
+        // Solo abandonar la persecucion si no existe una
+        // alerta externa y el jugador no ha sido capturado
+        if (!respondingToAlert &&
+            !playerCaptured &&
+            !vision.CanSeePlayer)
+        {
+            ChangeState(EnemyState.Patrol);
+            return;
+        }
+
+        // Actualizar la posicion del objetivo
+        lastKnownPosition = target.position;
+
         LookAtPosition(lastKnownPosition);
 
         repathTimer -= Time.deltaTime;
@@ -259,7 +418,7 @@ private void ChangeState(EnemyState newState)
             areaMask = agent.areaMask
         };
 
-        // Proyectar la posicion del jugador sobre el NavMesh
+        // Proyectar el objetivo sobre el NavMesh
         Vector3 groundTarget = lastKnownPosition;
         groundTarget.y = agent.nextPosition.y;
 
@@ -268,8 +427,8 @@ private void ChangeState(EnemyState newState)
             out NavMeshHit hit,
             2f,
             filter))
-       {
-           agent.SetDestination(hit.position);
+        {  
+            agent.SetDestination(hit.position);
         }
     }
 

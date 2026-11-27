@@ -138,6 +138,8 @@ public class StaticEnemyAI : MonoBehaviour
                 Debug.Log(
                     "Camara: alerta confirmada",
                     this);
+                    // Enviar la alerta al gestor de seguridad
+                    SendSecurityAlert();
 
                 break;
         }
@@ -146,6 +148,44 @@ public class StaticEnemyAI : MonoBehaviour
             gameObject.name + " - Estado: " +
             currentState,
             this);
+    }
+
+    // Enviar una alerta al confirmar la deteccion del jugador
+    private void SendSecurityAlert()
+    {
+        if (vision.Player == null)
+            return;
+
+        // Comprobar que exista el gestor de alertas
+        if (EnemyAlertManager.Instance == null)
+        {
+            Debug.LogWarning(
+                "No se encontro EnemyAlertManager en la escena.",
+                this);
+
+            return;
+        }
+
+        // Evitar duplicar una alerta existente
+        if (EnemyAlertManager.Instance.AlertActive)
+            return;
+
+        // Solicitar un guardia para atender la alerta
+        bool alertSent = EnemyAlertManager.Instance.RaiseAlert(
+            vision.Player);
+
+        if (alertSent)
+        {
+            Debug.Log(
+                gameObject.name + " - Alerta enviada correctamente.",
+                this);
+        }
+        else
+        {
+            Debug.LogWarning(
+                gameObject.name + " - No se pudo asignar un guardia.",
+                this);
+        }
     }
 
     // Inspeccionar la zona mediante rotacion horizontal

@@ -8,6 +8,11 @@ public class EnemyPatrol : MonoBehaviour
     [Header("Referencias")]
     [SerializeField] private PatrolNetwork patrolNetwork;
 
+    [Header("Modo de patrullaje")]
+    [SerializeField] private PatrolMode patrolMode = PatrolMode.Random;
+
+    [SerializeField] private PatrolRoute fixedRoute;
+
     [Header("Configuracion de patrullaje")]
     [SerializeField] private float patrolSpeed = 2f;
 
@@ -81,17 +86,9 @@ public class EnemyPatrol : MonoBehaviour
     }
 
     // Iniciar el patrullaje
+    // Iniciar el patrullaje segun el modo seleccionado
     public void StartPatrol()
     {
-        if (patrolNetwork == null)
-        {
-            Debug.LogError(
-                "No se ha asignado PatrolNetwork.",
-                this);
-
-            return;
-        }
-
         if (!agent.isOnNavMesh)
         {
             Debug.LogWarning(
@@ -101,14 +98,39 @@ public class EnemyPatrol : MonoBehaviour
             return;
         }
 
-        currentRoute = patrolNetwork.GetRandomRoute();
+        // Seleccionar la ruta segun el modo de patrullaje
+        switch (patrolMode)
+        {
+            case PatrolMode.Random:
 
-        if (currentRoute == null)
+                if (patrolNetwork == null)
+                {
+                    Debug.LogError(
+                        "No se ha asignado PatrolNetwork.",
+                        this);
+
+                    return;
+                }
+
+                currentRoute = patrolNetwork.GetRandomRoute();
+
+                break;
+
+            case PatrolMode.FixedRoute:
+
+                currentRoute = fixedRoute;
+
+                break;
+        }
+
+        // Validar la ruta seleccionada
+        if (currentRoute == null || !currentRoute.IsValid())
         {
             Debug.LogWarning(
-                "No existen rutas de patrullaje validas.",
+                "No existe una ruta de patrullaje valida.",
                 this);
 
+            StopPatrol();
             return;
         }
 
@@ -119,9 +141,28 @@ public class EnemyPatrol : MonoBehaviour
         isWaiting = false;
         currentNode = null;
 
-        // Elegir aleatoriamente el sentido de la ruta
-        reverseRoute = currentRoute.AllowReverse &&
-                       Random.value < 0.5f;
+        // Configurar el sentido inicial del recorrido
+        if (patrolMode == PatrolMode.FixedRoute)
+        {
+            // Calcular la distancia a los extremos de la ruta
+            float startDistance = Vector3.Distance(
+                transform.position,
+                currentRoute.StartNode.Position);
+
+            float endDistance = Vector3.Distance(
+                transform.position,
+                currentRoute.EndNode.Position);
+
+            // Comenzar por el extremo mas cercano
+            reverseRoute = currentRoute.AllowReverse &&
+                           endDistance < startDistance;
+        }
+        else
+        {
+            // Mantener el comportamiento aleatorio original
+            reverseRoute = currentRoute.AllowReverse &&
+                           Random.value < 0.5f;
+        }
 
         currentNodeIndex = reverseRoute
             ? currentRoute.NodeCount - 1
@@ -216,8 +257,33 @@ public class EnemyPatrol : MonoBehaviour
     }
 
     // Seleccionar una ruta conectada
+    // Seleccionar el siguiente recorrido de patrullaje
     private void SelectNextRoute()
     {
+        // Mantener al enemigo dentro de su ruta asignada
+        if (patrolMode == PatrolMode.FixedRoute)
+        {
+            if (currentRoute.AllowReverse)
+            {
+                // Invertir el sentido del recorrido
+                reverseRoute = !reverseRoute;
+
+                currentNodeIndex = reverseRoute
+                    ? currentRoute.NodeCount - 2
+                    : 1;
+            }
+            else
+            {
+                // Regresar al inicio de la misma ruta
+                reverseRoute = false;
+                currentNodeIndex = 0;
+            }
+
+            MoveToCurrentTarget();
+            return;
+        }
+
+        // Comportamiento original del patrullaje aleatorio
         PatrolRoute nextRoute =
             patrolNetwork.GetConnectedRoute(
                 currentNode,
