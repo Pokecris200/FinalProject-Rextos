@@ -31,6 +31,9 @@ public class GameManager : MonoBehaviour
 
         // Sized from the enum itself, so no edits are needed if it grows.
         _hasBodyPart = new bool[Enum.GetValues(typeof(BodyPartType)).Length];
+
+        // Head is the default model, so the player always owns it.
+        _hasBodyPart[(int)BodyPartType.Head] = true;
     }
 
     /// <summary>Returns true if the given body part was already collected.</summary>

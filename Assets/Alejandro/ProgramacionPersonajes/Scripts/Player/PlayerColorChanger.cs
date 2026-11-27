@@ -107,6 +107,12 @@ public class PlayerColorChanger : MonoBehaviour
             return;
         }
 
+        // Undo any tint on the model being hidden, so it isn't tinted if it is shown again.
+        if (_targetRenderer != null && _targetRenderer != newRenderer)
+        {
+            _targetRenderer.material.color = _baseColor;
+        }
+
         _targetRenderer = newRenderer;
 
         // The new model's own color becomes the one restored later.

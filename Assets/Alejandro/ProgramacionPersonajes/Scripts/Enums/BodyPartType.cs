@@ -1,11 +1,12 @@
 /// <summary>
 /// Body parts the player can collect. The declaration order defines progression:
-/// a higher value is a more advanced part (Arms > Legs > Torso).
+/// a higher value is a more advanced part (Legs > Arms > Torso > Head)
 /// Do not reorder or add values unless the design changes.
 /// </summary>
 public enum BodyPartType
 {
+    Head,
     Torso,
-    Legs,
-    Arms
+    Arms,
+    Legs
 }
