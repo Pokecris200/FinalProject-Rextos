@@ -19,16 +19,18 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        Debug.Log("Intentando iniciar GameManager");
         // Keep only the first instance alive.
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            Debug.Log("Fallo. GameManager ya existe");
             return;
         }
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
+        Debug.Log("WOW! GameManager creado con exito! Tenemos orejas, que alegría!");
         // Sized from the enum itself, so no edits are needed if it grows.
         _hasBodyPart = new bool[Enum.GetValues(typeof(BodyPartType)).Length];
 

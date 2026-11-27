@@ -1,6 +1,7 @@
 
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(EnemyPatrol))]
@@ -311,6 +312,6 @@ private void ChangeState(EnemyState newState)
         return true;
     }
 
-
+    
 
 }

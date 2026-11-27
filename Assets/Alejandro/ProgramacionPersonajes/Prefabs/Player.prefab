@@ -118,7 +118,7 @@ MonoBehaviour:
   _moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   _dragAction: {fileID: 1120369429361536294, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   _disguiseAction: {fileID: 7040659881675835329, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  _switchAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  _roarAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!114 &4948035939326023237
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -289,7 +289,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 6985617026939932223, guid: f843abbf4342cf740b4abcaa94f7aa74, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7018923225350138898}
+      addedObject: {fileID: 1298606491701305472}
   m_SourcePrefab: {fileID: 100100000, guid: f843abbf4342cf740b4abcaa94f7aa74, type: 3}
 --- !u!4 &1295188626679671017 stripped
 Transform:
@@ -301,16 +301,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6985617026939932223, guid: f843abbf4342cf740b4abcaa94f7aa74, type: 3}
   m_PrefabInstance: {fileID: 4386913280908781096}
   m_PrefabAsset: {fileID: 0}
---- !u!58 &7018923225350138898
-CircleCollider2D:
+--- !u!135 &1298606491701305472
+SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6633969163925596183}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -319,24 +316,12 @@ CircleCollider2D:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
   m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
   m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &4449033512917640785
 PrefabInstance:
   m_ObjectHideFlags: 0

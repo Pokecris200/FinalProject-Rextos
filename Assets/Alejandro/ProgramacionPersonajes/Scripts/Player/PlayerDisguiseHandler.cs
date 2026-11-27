@@ -54,12 +54,14 @@ public class PlayerDisguiseHandler : MonoBehaviour
     /// <summary>Applies the active disguise. Ignored while on cooldown.</summary>
     public void Activate()
     {
+       
         if (IsOnCooldown)
         {
             return;
         }
 
         _isDisguiseActive = true;
+        Debug.Log("Disguised");
     }
 
     /// <summary>Restores the base disguise without triggering the cooldown (input released).</summary>
@@ -68,6 +70,7 @@ public class PlayerDisguiseHandler : MonoBehaviour
         _isDisguiseActive = false;
         IsOnCooldown = true;
         _cooldownTimer = _cooldownDuration;
+        Debug.Log("End Disguise");
     }
 
     /// <summary>
@@ -82,5 +85,6 @@ public class PlayerDisguiseHandler : MonoBehaviour
         }
 
         Deactivate();
+        
     }
 }

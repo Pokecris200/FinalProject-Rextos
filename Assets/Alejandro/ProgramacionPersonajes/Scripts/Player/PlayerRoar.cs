@@ -51,19 +51,23 @@ public class PlayerRoar : MonoBehaviour
         ///Confirm enemies reached, exits early if none
         if (hits == null || hits.Length == 0)
         {
+            Debug.Log("No enemy in range for roar");
             return false;
         }
 
         ///Stuns each enemy in range of the roar
         foreach (Collider hit in hits)
         {
-            //Code commented out while code is integrated
-            //EnemyAI candidate = hit.GetComponentInParent<EnemyAI>();
-            //if (candidate == null)
-            //{
-            //    continue;
-            //}
-            //candidate.Stunned();
+            
+            EnemyAI candidate = hit.GetComponentInParent<EnemyAI>();
+            if (candidate == null)
+            {
+                continue;
+            }
+            Debug.Log("Enviando susto");
+            //Nota: Remover comentario luego de implementar GetScared() en EnemyAI
+            //candidate.GetScared();
+            
         }
         _isRoaring = true;
         return true;

@@ -8,20 +8,21 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(PlayerMovement))]
 [RequireComponent(typeof(PlayerDragHandler))]
 [RequireComponent(typeof(PlayerDisguiseHandler))]
-[RequireComponent(typeof(PlayerModelSwitcher))]
+[RequireComponent(typeof(PlayerColorChanger))]
+[RequireComponent(typeof(PlayerRoar))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Input Actions")]
     [SerializeField] private InputActionReference _moveAction;   // Vector2
     [SerializeField] private InputActionReference _dragAction;   // Button (hold to drag)
     [SerializeField] private InputActionReference _disguiseAction;  // Button (hold to change disguise)
-    [SerializeField] private InputActionReference _switchAction;  // Button (press to change model)
+    [SerializeField] private InputActionReference _roarAction;  // Button (hold to change disguise)
 
     private PlayerMovement _movement;
     private PlayerDragHandler _dragHandler;
     private PlayerDisguiseHandler _disguiseHandler;
-    private PlayerModelSwitcher _modelSwitcher;
-
+    private PlayerColorChanger _colorChanger;
+    private PlayerRoar _roar;
 
 
     private void Awake()
@@ -29,7 +30,8 @@ public class PlayerController : MonoBehaviour
         _movement = GetComponent<PlayerMovement>();
         _dragHandler = GetComponent<PlayerDragHandler>();
         _disguiseHandler = GetComponent<PlayerDisguiseHandler>();
-        _modelSwitcher = GetComponent<PlayerModelSwitcher>();
+        _colorChanger = GetComponent<PlayerColorChanger>();
+        _roar = GetComponent<PlayerRoar>();
     }
 
     private void OnEnable()
@@ -40,13 +42,15 @@ public class PlayerController : MonoBehaviour
         _dragAction.action.canceled += OnDragCanceled;
         _disguiseAction.action.performed += OnDisguisePerformed;
         _disguiseAction.action.canceled += OnDisguiseCanceled;
-        _switchAction.action.performed += OnSwitchPerformed;
-        _switchAction.action.canceled += OnSwitchCancelled;
+        _roarAction.action.performed += OnRoarPerformed;
+        _roarAction.action.canceled += OnRoarCanceled;
+
 
         _moveAction.action.Enable();
         _dragAction.action.Enable();
         _disguiseAction.action.Enable();
-        _switchAction.action.Enable();
+        _roarAction.action.Enable();
+        
     }
 
     private void OnDisable()
@@ -57,18 +61,22 @@ public class PlayerController : MonoBehaviour
         _dragAction.action.canceled -= OnDragCanceled;
         _disguiseAction.action.performed -= OnDisguisePerformed;
         _disguiseAction.action.canceled -= OnDisguiseCanceled;
-        _switchAction.action.performed -= OnSwitchPerformed;
-        _switchAction.action.canceled -= OnSwitchCancelled;
+        _roarAction.action.performed += OnRoarPerformed;
+        _roarAction.action.canceled += OnRoarCanceled;
+
+
 
         _moveAction.action.Disable();
         _dragAction.action.Disable();
         _disguiseAction.action.Disable();
+        _roarAction.action.Disable();
+        
 
     }
 
     private void OnMovePerformed(InputAction.CallbackContext context)
     {
-        if (!_disguiseHandler.isDisguiseActive)
+        if (! (_disguiseHandler.isDisguiseActive || _roar.IsRoaring) )
         {
             Vector2 direction = context.ReadValue<Vector2>();
             _movement.SetDirection(direction);
@@ -82,8 +90,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnDragPerformed(InputAction.CallbackContext context)
     {
-        // Starting a drag counts as a different input for the disguise action.
-        _disguiseHandler.NotifyOtherInput();
+        // Starting a drag counts as a different input for the disguise action
         _dragHandler.TryStartDrag();
     }
 
@@ -94,6 +101,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisguisePerformed(InputAction.CallbackContext context)
     {
+        _movement.SetDirection(Vector2.zero);
         _disguiseHandler.Activate();
     }
 
@@ -102,14 +110,21 @@ public class PlayerController : MonoBehaviour
         _disguiseHandler.Deactivate();
     }
 
-    private void OnSwitchPerformed(InputAction.CallbackContext context)
+    private void OnRoarPerformed(InputAction.CallbackContext context)
     {
-        Debug.Log("Switch Performed");
-        _modelSwitcher.DebugModelSwitch();
+        Debug.Log("Roar activated");
+        _roar.TryRoar();
     }
 
-    private void OnSwitchCancelled(InputAction.CallbackContext context)
+    private void OnRoarCanceled(InputAction.CallbackContext context)
     {
-        Debug.Log("SwitchFinished");
+        _roar.StopRoaring();
+        Debug.Log("Roar Button released");
     }
+
+    public bool IsDisguised()
+    {
+        return _disguiseHandler.isDisguiseActive;
+    }
+
 }
